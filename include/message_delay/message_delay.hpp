@@ -9,14 +9,30 @@
 #include <ros/timer.h>
 #include <topic_tools/shape_shifter.h>
 
+#include <boost/asio/deadline_timer.hpp>
+#include <boost/asio/io_service.hpp>
 #include <boost/bind.hpp>
+#include <boost/thread/thread.hpp>
 
 namespace message_delay {
 
 class MessageDelay : public nodelet::Nodelet {
 public:
-  MessageDelay() {}
-  virtual ~MessageDelay() {}
+  MessageDelay() : guard_timer_(timer_service_) {
+    // run timer service in background.
+    // the guard timer keeps the service running.
+    // the guard timer is preferred than io_service::work
+    // because io_service::work is deprecated in recent versions of boost.
+    guard_timer_.async_wait(boost::bind(doNothing));
+    timer_thread_ = boost::thread(boost::bind(&boost::asio::io_service::run, &timer_service_));
+  }
+  virtual ~MessageDelay() {
+    // stop the timer serivce
+    timer_service_.stop();
+    if (timer_thread_.joinable()) {
+      timer_thread_.join();
+    }
+  }
 
 private:
   virtual void onInit() {
@@ -48,14 +64,16 @@ private:
       publisher_ = msg->advertise(nh, "topic_out", 10);
     }
 
-    // schedule delayed publishment
-    ros::Timer *const timer(new ros::Timer);
-    *timer = nh.createTimer(delay_, boost::bind(&MessageDelay::onTimerExpired, this, msg, timer),
-                            true /*oneshot*/);
+    // schedule delayed publishment.
+    // ros::Timer can do the same thing
+    // but boost::asio::deadline_timer is 50% lighter on my test environment.
+    boost::asio::deadline_timer *const timer(new boost::asio::deadline_timer(timer_service_));
+    timer->expires_from_now(delay_.toBoost());
+    timer->async_wait(boost::bind(&MessageDelay::onTimerExpired, this, msg, timer));
   }
 
   void onTimerExpired(const topic_tools::ShapeShifter::ConstPtr &msg,
-                      const ros::Timer *const timer) {
+                      const boost::asio::deadline_timer *const timer) {
     // publish if the publisher is valid
     if (publisher_) {
       publisher_.publish(msg);
@@ -65,12 +83,21 @@ private:
     delete timer;
   }
 
+  // for the guard timer
+  static void doNothing() {}
+
 private:
   // parameters
   ros::Duration delay_;
 
+  // ros workers
   ros::Subscriber subscriber_;
   ros::Publisher publisher_;
+
+  // timer contexts
+  boost::asio::io_service timer_service_;
+  boost::asio::deadline_timer guard_timer_;
+  boost::thread timer_thread_;
 };
 } // namespace message_delay
 

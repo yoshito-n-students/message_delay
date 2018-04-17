@@ -16,7 +16,10 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS 
+  system
+  thread
+)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -155,6 +158,7 @@ add_executable(
 target_link_libraries(
   message_delay
   ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
 )
 target_link_libraries(
   test_image_publisher
