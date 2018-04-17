@@ -1,0 +1,5 @@
+<library path="lib/libmessage_delay">
+    <class name="message_delay/MessageDelay" type="message_delay::MessageDelay" base_class_type="nodelet::Nodelet">
+        <description>simulate network delay</description>
+    </class>
+</library>
