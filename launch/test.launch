@@ -1,0 +1,22 @@
+<launch>
+    <!-- -->
+    <!-- test image publisher -->
+    <node name="image_publisher" pkg="message_delay" type="test_image_publisher" output="screen">
+        <remap from="image" to="test_image"/>
+        <param name="height" value="480"/>
+        <param name="width" value="640"/>
+        <param name ="fps" value="30."/>
+    </node>
+    <!-- -->
+    <!-- network delay simulator -->
+    <node name="image_delay" pkg="nodelet" type="nodelet" 
+          args="standalone message_delay/MessageDelay" output="screen">
+        <remap from="topic_in" to="/test_image"/>
+        <remap from="topic_out" to="/test_image_delay"/>
+        <param name="delay" value="10."/>
+    </node>
+    <!-- -->
+    <!-- delayed topic monitors -->
+    <node name="delay_display" pkg="rostopic" type="rostopic" args="delay test_image_delay" output="screen"/>
+    <node name="hz_display" pkg="rostopic" type="rostopic" args="hz test_image_delay" output="screen"/>
+</launch>
