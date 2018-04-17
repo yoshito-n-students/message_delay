@@ -10,7 +10,6 @@
 #include <topic_tools/shape_shifter.h>
 
 #include <boost/bind.hpp>
-#include <boost/shared_ptr.hpp>
 
 namespace message_delay {
 
@@ -35,7 +34,8 @@ private:
       // prefer unreliable connection than reliable connection
       transport_hints.unreliable().reliable();
     }
-    subscriber_ = nh.subscribe("topic_in", 10, &MessageDelay::onMessageReceived, this, transport_hints);
+    subscriber_ =
+        nh.subscribe("topic_in", 10, &MessageDelay::onMessageReceived, this, transport_hints);
   }
 
 private:
