@@ -11,8 +11,8 @@
     <!-- network delay simulator -->
     <node name="image_delay" pkg="nodelet" type="nodelet" 
           args="standalone message_delay/MessageDelay" output="screen">
-        <remap from="topic_in" to="/test_image"/>
-        <remap from="topic_out" to="/test_image_delay"/>
+        <remap from="topic_in" to="test_image"/>
+        <remap from="topic_out" to="test_image_delay"/>
         <param name="delay" value="10."/>
     </node>
     <!-- -->
